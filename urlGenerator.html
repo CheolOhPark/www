@@ -96,18 +96,17 @@
 
                 if (!StringUtil.isEmpty(url) || !StringUtil.isEmpty(title)) {
                     sb.append(QUERY);
-
                     // url
                     if (!StringUtil.isEmpty(url)) {
                         sb.append(PARAM_URL);
-                        sb.append(encodeURIComponent(url));
+                        sb.append(encodeURIComponent(url.trim()));
                     }
 
                     // title  
                     if (!StringUtil.isEmpty(title)) {
                         sb.append(AMPERSAND);
                         sb.append(PARAM_TITLE);
-                        sb.append(encodeURIComponent(title));
+                        sb.append(encodeURIComponent(title.trim()));
                     }
                 }
 
