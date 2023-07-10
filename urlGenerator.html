@@ -92,7 +92,7 @@
                 // scheme 
                 sb.append(OCB_SCHEME);
                 // command
-                sb.append(StringUtil.removeLastChar(command, '/'));
+                sb.append(StringUtil.removeLastChar(command.trim(), '/'));
 
                 if (!StringUtil.isEmpty(url) || !StringUtil.isEmpty(title)) {
                     sb.append(QUERY);
