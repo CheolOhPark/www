@@ -110,7 +110,7 @@
                 }
 
                 var schemeUrl = sb.toString();
-                var applinkUrl = encodeURIComponent(APPLINK + schemeUrl);
+                var applinkUrl = encodeURIComponent(APPLINK + encodeURIComponent(schemeUrl));
                 var referrerUrl = REFERRER_MARKET + applinkUrl;
                 var referrerHttpsUrl = REFERRER_HTTPS + applinkUrl;
 
