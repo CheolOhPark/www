@@ -29,7 +29,8 @@
             var EQUAL = "=";
 
             var OCB_SCHEME = "ocbt://com.skmc.okcashbag.home_google" + SLASH;
-            var REFERRER = "https://play.google.com/store/apps/details?id=com.skmc.okcashbag.home_google&referrer=";
+            var REFERRER_MARKET = "market://details?id=com.skmc.okcashbag.home_google&referrer=";
+            var REFERRER_HTTPS = "https://play.google.com/store/apps/details?id=com.skmc.okcashbag.home_google&referrer=";
             var APPLINK = "applink=";
 
             var PARAM_URL = "url" + EQUAL;
@@ -110,13 +111,15 @@
 
                 var schemeUrl = sb.toString();
                 var applinkUrl = encodeURIComponent(APPLINK + schemeUrl);
-                var referrerUrl = REFERRER + applinkUrl;
+                var referrerUrl = REFERRER_MARKET + applinkUrl;
+                var referrerHttpsUrl = REFERRER_HTTPS + applinkUrl;
 
                 var select = document.getElementById('s01');
                 var universalHost = select.options[select.selectedIndex].value;
 
                 setValue('ocb_result', schemeUrl);
                 setValue('referrer_result', referrerUrl);
+                setValue('referrer_https_result', referrerHttpsUrl);
                 setValue('universal_result', schemeUrl.replace(OCB_SCHEME, universalHost));
             }
 
@@ -145,6 +148,21 @@
                 var copyText = document.getElementById(id);
                 copyText.select();
                 document.execCommand("Copy");
+            }
+
+            function launch(id) {
+                var url = document.getElementById(id).value;
+
+                if (url == "") {
+                    alert('url is empty');
+                    return;
+                }
+
+                var result = confirm('launch ' + url);
+
+                if (result) {
+                    location.href = url;
+                }
             }
         </script>
     </head>
@@ -195,15 +213,32 @@
 
                 <tr> 
                     <td class="left"><b>OCBT:// URL</b><input id="ocb_result" /></td>
-                    <td class="right"><button onclick="copyToClipboard('ocb_result')">클립보드로 복사</button></td>
+                    <td class="right">
+                        <button onclick="copyToClipboard('ocb_result')">클립보드로 복사</button>
+                        <button onclick="launch('ocb_result')">테스트</button>
+                    </td>
                 </tr>
                 <tr>
-                    <td class="left"><b>Android Referrer URL</b><input id="referrer_result" /></td>
-                    <td class="right"><button onclick="copyToClipboard('referrer_result')">클립보드로 복사</button></td>
+                    <td class="left"><b>Android Referrer MARKET URL</b><input id="referrer_result" /></td>
+                    <td class="right">
+                        <button onclick="copyToClipboard('referrer_result')">클립보드로 복사</button>
+                        <button onclick="launch('referrer_result')">테스트</button>
+                    </td>
                 </tr>
+                <tr>
+                    <td class="left"><b>Android Referrer HTTPS URL</b><input id="referrer_https_result" /></td>
+                    <td class="right">
+                        <button onclick="copyToClipboard('referrer_https_result')">클립보드로 복사</button>
+                        <button onclick="launch('referrer_https_result')">테스트</button>
+                    </td>
+                </tr>
+
                 <tr>
                     <td class="left"><b>iOS Universal Link URL</b><input id="universal_result" /></td>
-                    <td class="right"><button onclick="copyToClipboard('universal_result')">클립보드로 복사</button></td>
+                    <td class="right">
+                        <button onclick="copyToClipboard('universal_result')">클립보드로 복사</button>
+                        <button onclick="launch('universal_result')">테스트</button>
+                    </td>
                 </tr>
 
             </table>
