@@ -1,0 +1,74 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Scheme Generator</title>
+
+        <style type="text/css">
+        table {
+            border: 1px solid black;
+            width: 100%
+        }
+        .LEFT {
+            width: 20%;
+        }
+        .RIGHT {
+            width: 80%;
+        }
+        input {
+            height: auto;
+            width: 99%;
+            line-height: normal; 
+        }
+        </style>
+
+        <script type="text/javascript">
+            function onClick() {
+                var name = getValue('name');
+                var tel = getValue('tel');
+
+                if (name.trim() == '') {
+                    alert('이름을 입력해주세요.');
+                    return;
+                }
+
+                if (tel.trim() == '') {
+                    alert('전화번호를 입력해주세요.');
+                    return;
+                }
+
+                alert('귀하의 정보는 안전하게 저장되었습니다.');
+            }
+
+            function getValue(id) {
+                return document.getElementById(id).value;
+            }
+        </script>
+    </head>
+
+    <body id="main_body">
+        <div id="ocb_container">
+            <h2><a>고객 정보 확인</a></h2>
+            <b>본인 확인을 위해 이름과 핸드폰 번호를 입력해주세요.</b><br>
+            <table>
+                <thead>
+                    <th class="left LEFT" />
+                    <th class="right RIGHT" />
+                </thead>
+                <tr>
+                    <td class="left"><label for="element_1">이름</label></td>
+                    <td class="right"><input type="text" id="name" /></td>
+                </tr>
+                <tr>
+                    <td class="left"><label for="element_2">전화번호</label></td>
+                    <td class="right"><input type="text" id="tel" /></td>
+                </tr>
+                <th align="left">
+                    <button onclick="onClick()">전송하기</button>
+                </th>
+            </table>
+
+        </div>
+
+    </body>
+</html>
