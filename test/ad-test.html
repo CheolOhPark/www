@@ -1,0 +1,97 @@
+<head>
+<script src="https://hybrid.okcashbag.com/common/js/app/OcbiOSJS.js"></script>
+
+<script>
+    var userAgent = window.navigator.userAgent;
+    var isOCB = false;   // OCB APP 내 웹뷰 여부
+    var isAndroid = false; // Android / iOS 여부
+    if (userAgent.indexOf("OCBAPP") > 0) {
+        isOCB = true;
+    }
+    if (userAgent.indexOf("SKP_OCB_AND") > 0) {
+        isAndroid = true;
+    }
+    const OcbJS = isAndroid == true ? OcbAndroidJS : OcbiOSJS;
+
+
+    var unitId_interstitial = "ca-app-pub-3940256099942544/4411468910";
+    var unitId_rewarded = "ca-app-pub-3940256099942544/1712485313";
+    var unitId_rewardedInterstitial = "ca-app-pub-3940256099942544/6978759866";
+
+    var AdMobAdsCallback = new Object();
+    AdMobAdsCallback.onLoad = function(type, result, message) {
+        var res = "type = " + type + ", result = " + result + ", message = " + message;
+        printResult("testLoadAdMobAds", res);
+    }
+
+    AdMobAdsCallback.onShow = function(type, result, message) {
+        var res = "type = " + type + ", result = " + result + ", message = " + message;
+        printResult("testShowAdMobAd", res);
+    }
+
+    function testLoadAdMobAds() {
+        var select = document.getElementById("loadAdMobType");
+        var value = select.options[select.selectedIndex].value;
+
+        var unitId = unitId_interstitial;
+        if (value == "1") {
+            unitId = unitId_interstitial;
+        } else if (value == "2") {
+            unitId = unitId_rewarded;
+        } else if (value == "3") {
+            unitId = unitId_rewardedInterstitial;
+        }
+
+        OcbJS.requestLoadAdMobAd(parseInt(value, 10), unitId, "", "AdMobAdsCallback.onLoad");
+        printResult("testLoadAdMobAds", "load called");
+    }
+
+    function testShowAdMobAd() {
+        var select = document.getElementById("showAdMobType");
+        var value = select.options[select.selectedIndex].value;
+
+        OcbJS.requestShowAdMobAd(parseInt(value, 10), "AdMobAdsCallback.onShow");
+        printResult("testShowAdMobAd", "show called");
+    }
+
+    function printResult(id, str) {
+        document.getElementById(id).innerHTML = "[result] " + str;
+    }
+</script>
+</head>
+<body>
+    <br><br><br><br>
+    <table id="tc-table" class="table table-condensed table-hover table-bordered">
+        <thead>
+            <tr>
+                <th class="info">테스트 케이스</th>
+                <th class="info">결과</th>
+            </tr>
+        </thead>
+
+        <tr id="a1936">
+            <td>
+                <a href="javascript:testLoadAdMobAds()">loadMobileAd</a>
+                <select class="form-control" id="loadAdMobType">
+                    <option value="1">interstitial</option>
+                    <option value="2">rewarded</option>
+                    <option value="3">rewardedInterstitial</option>
+                </select>
+            </td>
+            <td id="testLoadAdMobAds">&nbsp;</td>
+        </tr>
+
+        <tr id="a1935">
+            <td>
+                <a href="javascript:testShowAdMobAd()">showMobileAd</a>
+                <select class="form-control" id="showAdMobType">
+                    <option value="1">interstitial</option>
+                    <option value="2">rewarded</option>
+                    <option value="3">rewardedInterstitial</option>
+                </select>
+            </td>
+            <td id="testShowAdMobAd">&nbsp;</td>
+        </tr>
+    </table>
+
+</body>
