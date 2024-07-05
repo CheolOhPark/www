@@ -17,9 +17,9 @@
         }
         input {
             height: auto;
-            width: 99%;
             line-height: normal; 
         }
+
         </style>
 
         <script type="text/javascript">
@@ -29,12 +29,13 @@
             var EQUAL = "=";
 
             var OCB_SCHEME = "ocbt://com.skmc.okcashbag.home_google" + SLASH;
-            var REFERRER_MARKET = "market://details?id=com.skmc.okcashbag.home_google&referrer=";
-            var REFERRER_HTTPS = "https://play.google.com/store/apps/details?id=com.skmc.okcashbag.home_google&referrer=";
+            var REFERRER = "https://play.google.com/store/apps/details?id=com.skmc.okcashbag.home_google&referrer=";
             var APPLINK = "applink=";
 
             var PARAM_URL = "url" + EQUAL;
             var PARAM_TITLE = "title" + EQUAL;
+            var PARAM_MISSION = "eventId" + EQUAL;
+            var PARAM_TITLE_TYPE = "titleType" + EQUAL;
 
             //------------------------------------------------
             function StringUtil() {
@@ -91,36 +92,31 @@
                 // scheme 
                 sb.append(OCB_SCHEME);
                 // command
-                sb.append(StringUtil.removeLastChar(command.trim(), '/'));
+                sb.append(StringUtil.removeLastChar(command, '/'));
 
                 if (!StringUtil.isEmpty(url) || !StringUtil.isEmpty(title)) {
                     sb.append(QUERY);
+
                     // url
                     if (!StringUtil.isEmpty(url)) {
                         sb.append(PARAM_URL);
-                        sb.append(encodeURIComponent(url.trim()));
+                        sb.append(encodeURIComponent(url));
                     }
 
                     // title  
                     if (!StringUtil.isEmpty(title)) {
                         sb.append(AMPERSAND);
                         sb.append(PARAM_TITLE);
-                        sb.append(encodeURIComponent(title.trim()));
+                        sb.append(encodeURIComponent(title));
                     }
                 }
 
                 var schemeUrl = sb.toString();
-                var applinkUrl = encodeURIComponent(APPLINK + encodeURIComponent(schemeUrl));
-                var referrerUrl = REFERRER_MARKET + applinkUrl;
-                var referrerHttpsUrl = REFERRER_HTTPS + applinkUrl;
-
-                var select = document.getElementById('s01');
-                var universalHost = select.options[select.selectedIndex].value;
+                var applinkUrl = encodeURIComponent(APPLINK + schemeUrl);
+                var referrerUrl = REFERRER + applinkUrl;
 
                 setValue('ocb_result', schemeUrl);
                 setValue('referrer_result', referrerUrl);
-                setValue('referrer_https_result', referrerHttpsUrl);
-                setValue('universal_result', schemeUrl.replace(OCB_SCHEME, universalHost));
             }
 
             function isChecked(id) {
@@ -150,19 +146,16 @@
                 document.execCommand("Copy");
             }
 
-            function launch(id) {
-                var url = document.getElementById(id).value;
+            function encodeUrl(id) {
+                var url = getValue(id);
+                var encUrl = encodeURIComponent(url);
+                setValue(id, encUrl);
+            }
 
-                if (url == "") {
-                    alert('url is empty');
-                    return;
-                }
-
-                var result = confirm('launch ' + url);
-
-                if (result) {
-                    location.href = url;
-                }
+            function decodeUrl(id) {
+                var url = getValue(id);
+                var encUrl = decodeURIComponent(url);
+                setValue(id, encUrl);
             }
         </script>
     </head>
@@ -175,10 +168,10 @@
             <table>
                 <thead>
                     <th class="left LEFT" />
-                    <th class="right RIGHT" />
+                        <th class="right RIGHT" />
                 </thead>
                 <tr>
-                    <td class="left"><label for="element_1">Command</label></td>
+                    <td class="left"><label for="element_1">Command</label></td>     
                     <td class="right"><input type="text" id="ocb_command" value="detail/event" /></td>
                 </tr>
                 <tr>
@@ -188,15 +181,6 @@
                 <tr>
                     <td class="left"><label for="element_3">Title</label></td>
                     <td class="right"><input type="text" id="ocb_title"  value="이벤트"/></td>
-                </tr>
-                <tr>
-                    <td class="left"><label for="element_1"><b>(iOS) Universal Link</b></label></td>
-                    <td class="right">
-                        <select class="form-control" id="s01">
-                            <option value="https://applink.okcashbag.com/">okcashbag</option>
-                            <option value="https://applink.ogog.kr/">ogog</option>
-                        </select>
-                    </td>
                 </tr>
 
                 <th align="left">
@@ -212,37 +196,31 @@
                 </thead>
 
                 <tr> 
-                    <td class="left"><b>OCBT:// URL</b><input id="ocb_result" /></td>
-                    <td class="right">
-                        <button onclick="copyToClipboard('ocb_result')">클립보드로 복사</button>
-                        <button onclick="launch('ocb_result')">테스트</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="left"><b>Android Referrer MARKET URL</b><input id="referrer_result" /></td>
-                    <td class="right">
-                        <button onclick="copyToClipboard('referrer_result')">클립보드로 복사</button>
-                        <button onclick="launch('referrer_result')">테스트</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="left"><b>Android Referrer HTTPS URL</b><input id="referrer_https_result" /></td>
-                    <td class="right">
-                        <button onclick="copyToClipboard('referrer_https_result')">클립보드로 복사</button>
-                        <button onclick="launch('referrer_https_result')">테스트</button>
-                    </td>
-                </tr>
+                    <td class="left">OCBT:// URL <input id="ocb_result" /></td>
+                    <td class="right"><button onclick="copyToClipboard('ocb_result')">클립보드로 복사</button></td>
 
-                <tr>
-                    <td class="left"><b>iOS Universal Link URL</b><input id="universal_result" /></td>
-                    <td class="right">
-                        <button onclick="copyToClipboard('universal_result')">클립보드로 복사</button>
-                        <button onclick="launch('universal_result')">테스트</button>
-                    </td>
                 </tr>
-
+                <tr>
+                    <td class="left">REFERRER URL <input id="referrer_result" /></td>
+                    <td class="right"><button onclick="copyToClipboard('referrer_result')">클립보드로 복사</button></td>
+                </tr>
             </table>
 
+            <br>
+            <form >
+                <fieldset>
+                    <div class="form_description">
+                        <h4>URL Decoder/Encoder</h4>
+                        <p></p>
+                    </div>
+                    <textarea name="URL Decoder/Encoder" rows="4" cols="70" id="url_data"></textarea>
+                    <li class="buttons">
+                        <input type="button" value="Encode" id="url_encode" onclick="encodeUrl('url_data')">
+                        <input type="button" value="Decode" id="url_encode" onclick="decodeUrl('url_data')">
+                        <input type="reset" value="Reset">
+                    </li>
+                </fieldset>
+            </form>
         </div>
 
     </body>
