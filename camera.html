@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebRTC 카메라 테스트</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      justify-content: flex-start;
-      align-items: center;
-    }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WebRTC 카메라 테스트</title>
+        <style>
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    justify-content: flex-start;
+    align-items: center;
+}
     #cameraPreview {
-      width: 100%;
-      height: 300px;
-      background-color: #000;
+        width: 100%;
+        height: 300px;
+        background-color: #000;
     }
     #contentArea {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
     }
     #buttonContainer {
         display: flex; /* 버튼들을 한 줄로 배치 */
@@ -43,186 +43,201 @@
         width: 100%; /* 캡처된 이미지를 캡처영역 크기와 동일하게 설정 */
         height: 300px; /* 캡처된 이미지 영역 높이 */
     }
-  </style>
-</head>
-<body>
-  <!-- 카메라 프리뷰 -->
-  <div id="cameraPreview"></div>
+        </style>
+    </head>
+    <body>
+        <!-- 카메라 프리뷰 -->
+        <div id="cameraPreview"></div>
 
-  <div id="contentArea">
-    <!-- 버튼들을 한 줄로 배치 -->
-    <div id="buttonContainer">
-        <button id="permissionButton">권한요청</button>
-        <button id="permissionSetting">권한설정</button>
-        <button id="useButton">캡쳐</button>
-        <button id="uploadButton">업로드</button>
-    </div>
-    <canvas id="capturedImage"></canvas> <!-- 캡처된 이미지를 그릴 캔버스 -->
-  </div>
+        <div id="contentArea">
+            <!-- 버튼들을 한 줄로 배치 -->
+            <div id="buttonContainer">
+                <button id="permissionButton">권한요청</button>
+                <button id="permissionSetting">권한설정</button>
+                <button id="useButton">캡쳐</button>
+                <button id="uploadButton">업로드</button>
+            </div>
+            <canvas id="capturedImage"></canvas> <!-- 캡처된 이미지를 그릴 캔버스 -->
+        </div>
 
-  <script type="text/javascript" src="https://hybrid.okcashbag.com/common/js/app/OcbiOSJS.js"></script>
-  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-  <script>
-    let videoElement;
-    let stream;
-    let capturedImageCanvas = document.getElementById("capturedImage");
-    let context = capturedImageCanvas.getContext("2d");
-    let capturedImageDataUrl = "";
+        <script type="text/javascript" src="https://hybrid.okcashbag.com/common/js/app/OcbiOSJS.js"></script>
+        <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+        <script>
+            let videoElement;
+            let stream;
+            let capturedImageCanvas = document.getElementById("capturedImage");
+            let context = capturedImageCanvas.getContext("2d");
+            let capturedImageDataUrl = "";
 
-    let OcbApp;
-    let userAgent = window.navigator.userAgent;
-    let isOCB = false;   // OCB APP 내 웹뷰 여부
-    let isAndroid = false; // Android / iOS 여부
-    let cameraStarted = false;
+            let OcbApp;
+            let userAgent = window.navigator.userAgent;
+            let isOCB = false;   // OCB APP 내 웹뷰 여부
+            let isAndroid = false; // Android / iOS 여부
+            let cameraStarted = false;
 
-    if (userAgent.indexOf("OCBAPP") > 0) {
-        isOCB = true;
+            if (userAgent.indexOf("OCBAPP") > 0) {
+                isOCB = true;
 
-      if (userAgent.indexOf("SKP_OCB_AND") > 0) {
-          isAndroid = true;
-          OcbApp = OcbAndroidJS;
-      } else {
-          OcbApp = OcbiOSJS;
-      }
-    }
+                if (userAgent.indexOf("SKP_OCB_AND") > 0) {
+                    isAndroid = true;
+                    OcbApp = OcbAndroidJS;
+                } else {
+                    OcbApp = OcbiOSJS;
+                }
+            }
 
-    var Result = new Object();
-    Result.onResult = function(result, permission) {
-      if (result == 0) {
-        startCamera();
-      } else {
-        show("카메라 권한이 거부되었습니다.");
-      }
-    }
+            var Result = new Object();
+            Result.onResult = function(result, permission) {
+                if (result == 0) {
+                    startCamera();
+                } else {
+                    show("카메라 권한이 거부되었습니다.");
+                }
+            }
 
-    function show(message) {
-      if (isOCB) {
-        OcbApp.showToast(message);
-      } else {
-        alert(message);
-      }
-    }
+            function show(message) {
+                if (isOCB) {
+                    OcbApp.showToast(message);
+                } else {
+                    alert(message);
+                }
+            }
 
-    function requestPermission() {
-      startCamera();
-    }
+            function requestPermission() {
+                startCamera();
+            }
 
-    function requestSetting() {
-        if (!isOCB) {
-            show("앱에서 호출해야 합니다.");
-            return;
-        }
+            function requestSetting() {
+                if (!isOCB) {
+                    show("앱에서 호출해야 합니다.");
+                    return;
+                }
 
-        location.href = "ocbt://com.skmc.okcashbag.home_google/settingPermission";
-    }
+                location.href = "ocbt://com.skmc.okcashbag.home_google/settingPermission";
+            }
 
-    // 카메라 스트림을 가져오는 함수
-    async function startCamera() {
-      if (cameraStarted) {
-        return;
-      }
+            // 카메라 스트림을 가져오는 함수
+            async function startCamera() {
+                if (cameraStarted) {
+                    return;
+                }
 
-      try {
-        if (isOCB && isAndroid) {
-          if (OcbAndroidJS.checkPermission("android.permission.CAMERA") != 0) {
-            OcbAndroidJS.requestPermission("Result.onResult", "android.permission.CAMERA");
-            return;
-          }
-        }
-      } catch (err) {
-      }
+                try {
+                    if (isOCB && isAndroid) {
+                        if (OcbAndroidJS.checkPermission("android.permission.CAMERA") != 0) {
+                            OcbAndroidJS.requestPermission("Result.onResult", "android.permission.CAMERA");
+                            return;
+                        }
+                    }
+                } catch (err) {
+                }
 
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' } // 후면 카메라 사용
-        });
-        
-        videoElement = document.createElement('video');
-        videoElement.srcObject = stream;
-        videoElement.autoplay = true;
-        videoElement.muted = true;
-        videoElement.style.width = '100%';
-        videoElement.style.height = '100%';
-        document.getElementById('cameraPreview').appendChild(videoElement);
-        
-        // 비디오의 크기를 캔버스 크기와 동일하게 설정
-        const previewWidth = document.getElementById('cameraPreview').offsetWidth;
-        const previewHeight = document.getElementById('cameraPreview').offsetHeight;
-        
-        capturedImageCanvas.width = previewWidth;  // 캔버스 크기 설정
-        capturedImageCanvas.height = previewHeight; // 캔버스 크기 설정
-        
-        cameraStarted = true;
-      } catch (err) {
-        console.error('카메라 접근 오류:', err);
-        show("카메라 접근 오류!");
-      }
-    }
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-    // 카메라 프리뷰 캡처하는 함수
-    function captureImage() {
-      const width = videoElement.videoWidth;
-      const height = videoElement.videoHeight;
-      
-      // 캡처된 이미지를 캔버스에 그리기
-      context.drawImage(videoElement, 0, 0, capturedImageCanvas.width, capturedImageCanvas.height);
+                    // 후면 카메라를 찾기
+                    const rearCamera = videoDevices.find(
+                        device => device.deviceId && 
+                        (device.label.toLowerCase().includes('back') || device.facingMode === 'environment'));
 
-      // 캡처된 이미지를 Data URL로 변환
-      capturedImageDataUrl = capturedImageCanvas.toDataURL('image/png');
-      
-      // 캡처된 이미지를 화면에 보여주기
-      capturedImageCanvas.style.display = 'block';
-    }
+                    if (!rearCamera) {
+                        // 후면 카메라가 없을 경우, 'environment'를 지원하는 첫 번째 비디오 장치 선택
+                        rearCamera = videoDevices[0];
+                    }
 
-    // 이미지 업로드 함수
-    async function uploadImage() {
-      if (!capturedImageDataUrl) {
-        show("먼저 이미지를 캡처해 주세요.");
-        return;
-      }
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            deviceId: rearCamera.deviceId
+                        }
+                    });
 
-      const formData = new FormData();
-      const blob = dataURLtoBlob(capturedImageDataUrl);
-      formData.append('image', blob, 'captured_image.png');
+                    videoElement = document.createElement('video');
+                    videoElement.srcObject = stream;
+                    videoElement.autoplay = true;
+                    videoElement.muted = true;
+                    videoElement.style.width = '100%';
+                    videoElement.style.height = '100%';
+                    document.getElementById('cameraPreview').appendChild(videoElement);
 
-      try {
-        const response = await fetch('http://localhost:8000/upload', {
-          method: 'POST',
-          body: formData
-        });
+                    // 비디오의 크기를 캔버스 크기와 동일하게 설정
+                    const previewWidth = document.getElementById('cameraPreview').offsetWidth;
+                    const previewHeight = document.getElementById('cameraPreview').offsetHeight;
 
-        if (response.ok) {
-          show("이미지 업로드 성공!");
-        } else {
-          show("이미지 업로드 실패.");
-        }
-      } catch (error) {
-        console.error("업로드 중 오류 발생:", error);
-        show("서버에 업로드하는 동안 오류가 발생했습니다.");
-      }
-    }
+                    capturedImageCanvas.width = previewWidth;  // 캔버스 크기 설정
+                    capturedImageCanvas.height = previewHeight; // 캔버스 크기 설정
 
-    // Data URL을 Blob으로 변환하는 함수
-    function dataURLtoBlob(dataURL) {
-      const byteString = atob(dataURL.split(',')[1]);
-      const arrayBuffer = new ArrayBuffer(byteString.length);
-      const uint8Array = new Uint8Array(arrayBuffer);
+                    cameraStarted = true;
+                } catch (err) {
+                    console.error('카메라 접근 오류:', err);
+                    show("카메라 접근 오류!");
+                }
+            }
 
-      for (let i = 0; i < byteString.length; i++) {
-        uint8Array[i] = byteString.charCodeAt(i);
-      }
+            // 카메라 프리뷰 캡처하는 함수
+            function captureImage() {
+                const width = videoElement.videoWidth;
+                const height = videoElement.videoHeight;
 
-      return new Blob([uint8Array], { type: 'image/png' });
-    }
+                // 캡처된 이미지를 캔버스에 그리기
+                context.drawImage(videoElement, 0, 0, capturedImageCanvas.width, capturedImageCanvas.height);
 
-    // 버튼 클릭 이벤트 처리
-    document.getElementById('permissionButton').onclick = requestPermission; // 퍼미션 요청 버튼
-    document.getElementById('permissionSetting').onclick = requestSetting; // 퍼미션설정 
-    document.getElementById('useButton').onclick = captureImage;
-    document.getElementById('uploadButton').onclick = uploadImage;
+                // 캡처된 이미지를 Data URL로 변환
+                capturedImageDataUrl = capturedImageCanvas.toDataURL('image/png');
 
-    // 페이지 로드 시 카메라 시작
-    window.onload = startCamera;
-  </script>
-</body>
+                // 캡처된 이미지를 화면에 보여주기
+                capturedImageCanvas.style.display = 'block';
+            }
+
+            // 이미지 업로드 함수
+            async function uploadImage() {
+                if (!capturedImageDataUrl) {
+                    show("먼저 이미지를 캡처해 주세요.");
+                    return;
+                }
+
+                const formData = new FormData();
+                const blob = dataURLtoBlob(capturedImageDataUrl);
+                formData.append('image', blob, 'captured_image.png');
+
+                try {
+                    const response = await fetch('http://localhost:8000/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        show("이미지 업로드 성공!");
+                    } else {
+                        show("이미지 업로드 실패.");
+                    }
+                } catch (error) {
+                    console.error("업로드 중 오류 발생:", error);
+                    show("서버에 업로드하는 동안 오류가 발생했습니다.");
+                }
+            }
+
+            // Data URL을 Blob으로 변환하는 함수
+            function dataURLtoBlob(dataURL) {
+                const byteString = atob(dataURL.split(',')[1]);
+                const arrayBuffer = new ArrayBuffer(byteString.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+
+                for (let i = 0; i < byteString.length; i++) {
+                    uint8Array[i] = byteString.charCodeAt(i);
+                }
+
+                return new Blob([uint8Array], { type: 'image/png' });
+            }
+
+            // 버튼 클릭 이벤트 처리
+            document.getElementById('permissionButton').onclick = requestPermission; // 퍼미션 요청 버튼
+            document.getElementById('permissionSetting').onclick = requestSetting; // 퍼미션설정 
+            document.getElementById('useButton').onclick = captureImage;
+            document.getElementById('uploadButton').onclick = uploadImage;
+
+            // 페이지 로드 시 카메라 시작
+            window.onload = startCamera;
+        </script>
+    </body>
 </html>
