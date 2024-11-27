@@ -174,6 +174,25 @@ body {
                 }
             }
 
+            // 페이지 종료 시 카메라 리소스 해제
+            function stopCamera() {
+              if (stream) {
+                // 스트림의 모든 트랙을 종료
+                stream.getTracks().forEach(track => track.stop());
+              }
+              
+              // 비디오 엘리먼트를 제거
+              if (videoElement) {
+                videoElement.remove();
+              }
+              
+              cameraStarted = false;
+            }
+
+            // 페이지가 리로드되거나 벗어날 때 stopCamera 호출
+            window.addEventListener('beforeunload', stopCamera);
+            window.addEventListener('unload', stopCamera);
+
             // 카메라 프리뷰 캡처하는 함수
             function captureImage() {
                 const width = videoElement.videoWidth;
