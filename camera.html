@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width" />
+
+<head>
+    <title>CAMERA</title>
+    <script>
+    </script>
+</head>
+
+<body>
+<video id="localVideo" autoplay playsinline></video>
+<script>
+   // WebRTC 초기화 코드와 카메라 스트림 처리 코드 작성
+   navigator.mediaDevices.getUserMedia({ video: true })
+     .then(function(stream) {
+       var videoElement = document.getElementById('localVideo');
+       videoElement.srcObject = stream;
+     })
+     .catch(function(error) {
+       console.error('Error accessing media devices.', error);
+     });
+</script>
+</body>
+
