@@ -40,8 +40,8 @@
     #capturedImage {
         margin-top: 20px;
         display: none;
-        width: 100%;
-        height: 300px;
+        width: 100%; /* 캡처된 이미지를 캡처영역 크기와 동일하게 설정 */
+        height: 300px; /* 캡처된 이미지 영역 높이 */
     }
   </style>
 </head>
@@ -119,7 +119,7 @@
     // 카메라 스트림을 가져오는 함수
     async function startCamera() {
       if (cameraStarted) {
-        return
+        return;
       }
 
       try {
@@ -133,7 +133,10 @@
       }
 
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' } // 후면 카메라 사용
+        });
+        
         videoElement = document.createElement('video');
         videoElement.srcObject = stream;
         videoElement.autoplay = true;
@@ -141,6 +144,14 @@
         videoElement.style.width = '100%';
         videoElement.style.height = '100%';
         document.getElementById('cameraPreview').appendChild(videoElement);
+        
+        // 비디오의 크기를 캔버스 크기와 동일하게 설정
+        const previewWidth = document.getElementById('cameraPreview').offsetWidth;
+        const previewHeight = document.getElementById('cameraPreview').offsetHeight;
+        
+        capturedImageCanvas.width = previewWidth;  // 캔버스 크기 설정
+        capturedImageCanvas.height = previewHeight; // 캔버스 크기 설정
+        
         cameraStarted = true;
       } catch (err) {
         console.error('카메라 접근 오류:', err);
@@ -152,11 +163,9 @@
     function captureImage() {
       const width = videoElement.videoWidth;
       const height = videoElement.videoHeight;
-      capturedImageCanvas.width = width;
-      capturedImageCanvas.height = height;
-
-      // 비디오에서 이미지를 캡처하여 캔버스에 그리기
-      context.drawImage(videoElement, 0, 0, width, height);
+      
+      // 캡처된 이미지를 캔버스에 그리기
+      context.drawImage(videoElement, 0, 0, capturedImageCanvas.width, capturedImageCanvas.height);
 
       // 캡처된 이미지를 Data URL로 변환
       capturedImageDataUrl = capturedImageCanvas.toDataURL('image/png');
