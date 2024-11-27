@@ -52,8 +52,9 @@
   <div id="contentArea">
     <!-- 버튼들을 한 줄로 배치 -->
     <div id="buttonContainer">
-        <button id="permissionButton">퍼미션 요청</button>
-        <button id="useButton">사용하기</button>
+        <button id="permissionButton">권한요청</button>
+        <button id="permissionSetting">권한설정</button>
+        <button id="useButton">캡쳐</button>
         <button id="uploadButton">업로드</button>
     </div>
     <canvas id="capturedImage"></canvas> <!-- 캡처된 이미지를 그릴 캔버스 -->
@@ -68,10 +69,10 @@
     let context = capturedImageCanvas.getContext("2d");
     let capturedImageDataUrl = "";
 
+    let OcbApp;
     let userAgent = window.navigator.userAgent;
     let isOCB = false;   // OCB APP 내 웹뷰 여부
     let isAndroid = false; // Android / iOS 여부
-    let OcbApp = null;
     let cameraStarted = false;
 
     if (userAgent.indexOf("OCBAPP") > 0) {
@@ -79,9 +80,9 @@
 
       if (userAgent.indexOf("SKP_OCB_AND") > 0) {
           isAndroid = true;
-          OcbApp = OcbAndrojdJS
+          OcbApp = OcbAndroidJS;
       } else {
-          OcbApp = OcbiOSJS
+          OcbApp = OcbiOSJS;
       }
     }
 
@@ -106,16 +107,25 @@
       startCamera();
     }
 
+    function requestSetting() {
+        if (!isOCB) {
+            show("앱에서 호출해야 합니다.");
+            return;
+        }
+
+        location.href = "ocbt://com.skmc.okcashbag.home_google/settingPermission";
+    }
+
     // 카메라 스트림을 가져오는 함수
     async function startCamera() {
       if (cameraStarted) {
         return
       }
-      
+
       try {
         if (isOCB && isAndroid) {
           if (OcbAndroidJS.checkPermission("android.permission.CAMERA") != 0) {
-            OcbAndroidJS.requestPermission("Result.onRequest", "android.permission.CAMERA");
+            OcbAndroidJS.requestPermission("Result.onResult", "android.permission.CAMERA");
             return;
           }
         }
@@ -134,6 +144,7 @@
         cameraStarted = true;
       } catch (err) {
         console.error('카메라 접근 오류:', err);
+        show("카메라 접근 오류!");
       }
     }
 
@@ -197,6 +208,7 @@
 
     // 버튼 클릭 이벤트 처리
     document.getElementById('permissionButton').onclick = requestPermission; // 퍼미션 요청 버튼
+    document.getElementById('permissionSetting').onclick = requestSetting; // 퍼미션설정 
     document.getElementById('useButton').onclick = captureImage;
     document.getElementById('uploadButton').onclick = uploadImage;
 
