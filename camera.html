@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebRTC 카메라 프리뷰 캡처</title>
+  <title>WebRTC 카메라 테스트</title>
   <style>
     body {
       margin: 0;
@@ -25,15 +25,23 @@
       align-items: center;
       margin-top: 20px;
     }
+    #buttonContainer {
+        display: flex; /* 버튼들을 한 줄로 배치 */
+        justify-content: center;
+        gap: 10px; /* 버튼 간 간격 */
+        margin-bottom: 20px;
+    }
     button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
     }
     #capturedImage {
-      margin-top: 20px;
-      display: none;
+        margin-top: 20px;
+        display: none;
+        width: 100%;
+        height: 300px;
     }
   </style>
 </head>
@@ -42,11 +50,16 @@
   <div id="cameraPreview"></div>
 
   <div id="contentArea">
-    <button id="useButton">사용하기</button>
-    <button id="uploadButton">업로드</button>
+    <!-- 버튼들을 한 줄로 배치 -->
+    <div id="buttonContainer">
+        <button id="permissionButton">퍼미션 요청</button>
+        <button id="useButton">사용하기</button>
+        <button id="uploadButton">업로드</button>
+    </div>
     <canvas id="capturedImage"></canvas> <!-- 캡처된 이미지를 그릴 캔버스 -->
   </div>
 
+  <script type="text/javascript" src="https://hybrid.okcashbag.com/common/js/app/OcbiOSJS.js"></script>
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
   <script>
     let videoElement;
@@ -55,8 +68,60 @@
     let context = capturedImageCanvas.getContext("2d");
     let capturedImageDataUrl = "";
 
+    let userAgent = window.navigator.userAgent;
+    let isOCB = false;   // OCB APP 내 웹뷰 여부
+    let isAndroid = false; // Android / iOS 여부
+    let OcbApp = null;
+    let cameraStarted = false;
+
+    if (userAgent.indexOf("OCBAPP") > 0) {
+        isOCB = true;
+
+      if (userAgent.indexOf("SKP_OCB_AND") > 0) {
+          isAndroid = true;
+          OcbApp = OcbAndrojdJS
+      } else {
+          OcbApp = OcbiOSJS
+      }
+    }
+
+    var Result = new Object();
+    Result.onResult = function(result, permission) {
+      if (result == 0) {
+        startCamera();
+      } else {
+        show("카메라 권한이 거부되었습니다.");
+      }
+    }
+
+    function show(message) {
+      if (isOCB) {
+        OcbApp.showToast(message);
+      } else {
+        alert(message);
+      }
+    }
+
+    function requestPermission() {
+      startCamera();
+    }
+
     // 카메라 스트림을 가져오는 함수
     async function startCamera() {
+      if (cameraStarted) {
+        return
+      }
+      
+      try {
+        if (isOCB && isAndroid) {
+          if (OcbAndroidJS.checkPermission("android.permission.CAMERA") != 0) {
+            OcbAndroidJS.requestPermission("Result.onRequest", "android.permission.CAMERA");
+            return;
+          }
+        }
+      } catch (err) {
+      }
+
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoElement = document.createElement('video');
@@ -66,6 +131,7 @@
         videoElement.style.width = '100%';
         videoElement.style.height = '100%';
         document.getElementById('cameraPreview').appendChild(videoElement);
+        cameraStarted = true;
       } catch (err) {
         console.error('카메라 접근 오류:', err);
       }
@@ -91,7 +157,7 @@
     // 이미지 업로드 함수
     async function uploadImage() {
       if (!capturedImageDataUrl) {
-        alert("먼저 이미지를 캡처해 주세요.");
+        show("먼저 이미지를 캡처해 주세요.");
         return;
       }
 
@@ -106,13 +172,13 @@
         });
 
         if (response.ok) {
-          alert("이미지 업로드 성공!");
+          show("이미지 업로드 성공!");
         } else {
-          alert("이미지 업로드 실패.");
+          show("이미지 업로드 실패.");
         }
       } catch (error) {
         console.error("업로드 중 오류 발생:", error);
-        alert("서버에 업로드하는 동안 오류가 발생했습니다.");
+        show("서버에 업로드하는 동안 오류가 발생했습니다.");
       }
     }
 
@@ -130,6 +196,7 @@
     }
 
     // 버튼 클릭 이벤트 처리
+    document.getElementById('permissionButton').onclick = requestPermission; // 퍼미션 요청 버튼
     document.getElementById('useButton').onclick = captureImage;
     document.getElementById('uploadButton').onclick = uploadImage;
 
