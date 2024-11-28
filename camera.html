@@ -137,7 +137,7 @@ body {
                     const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
                     // 후면 카메라를 찾기
-                    const rearCamera = videoDevices.find(
+                    let rearCamera = videoDevices.find(
                         device => device.deviceId && 
                         (device.label.toLowerCase().includes('back') || device.facingMode === 'environment'));
 
