@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카메라 캡처</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+            text-align: center;
+        }
+
+        .camera-preview, .captured-image {
+            position: relative;
+            width: 100%;
+            height: 360px;
+            background-color: #000;
+            margin-bottom: 20px;
+        }
+
+        video, img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* 미리 캡처 영역을 항상 보이게 */
+        .captured-image {
+            display: none;  /* 카메라 시작 전에는 캡처 영역 숨기기 */
+        }
+
+        /* 카메라가 시작되면 캡처 이미지 영역 보이도록 */
+        .camera-started .captured-image {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 카메라 프리뷰 -->
+        <div class="camera-preview">
+            <video id="videoElement" autoplay playsinline></video>
+        </div>
+        
+        <!-- 버튼 4개 -->
+        <div class="controls">
+            <button id="startCamera">카메라 시작</button>
+            <button id="stopCamera">카메라 정지</button>
+            <button id="captureButton">캡처</button>
+            <button id="downloadButton">다운로드</button>
+        </div>
+
+        <!-- 캡쳐된 화면 -->
+        <div class="captured-image">
+            <img id="capturedImage" src="" alt="캡처된 이미지">
+        </div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('videoElement');
+        const captureButton = document.getElementById('captureButton');
+        const capturedImageArea = document.getElementById('capturedImage');
+        const startCameraButton = document.getElementById('startCamera');
+        const stopCameraButton = document.getElementById('stopCamera');
+        const downloadButton = document.getElementById('downloadButton');
+        const container = document.querySelector('.container');
+
+        let stream;
+
+        const userAgent = window.navigator.userAgent;
+        let isOCB = false;   // OCB APP 내 웹뷰 여부
+        let isAndroid = false; // Android / iOS 여부
+        let OcbApp = null;
+
+        if (userAgent.indexOf("OCBAPP") > 0) {
+            isOCB = true;
+
+          if (userAgent.indexOf("SKP_OCB_AND") > 0) {
+              isAndroid = true;
+              OcbApp = OcbAndrojdJS
+          } else {
+              OcbApp = OcbiOSJS
+          }
+        }
+
+        var Result = new Object();
+        Result.onResult = function(result, permission) {
+          if (result == 0) {
+            startCamera();
+          } else {
+            show("카메라 권한이 거부되었습니다.");
+          }
+        }
+
+        function show(message) {
+          if (isOCB) {
+            OcbApp.showToast(message);
+          } else {
+            alert(message);
+          }
+        }
+
+        function requestPermission() {
+            try {
+                if (isOCB && isAndroid) {
+                    if (OcbAndroidJS.checkPermission("android.permission.CAMERA") != 0) {
+                        OcbAndroidJS.requestPermission("Result.onResult", "android.permission.CAMERA");
+                        return;
+                    }
+                }
+            } catch (err) {
+            }
+
+            Result.onResult(0);
+        }
+
+        // 카메라 시작 함수
+        async function startCamera() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                    // 후면 카메라를 찾기
+                let rearCamera = videoDevices.find(
+                    device => device.deviceId && 
+                    (device.label.toLowerCase().includes('back') || device.facingMode === 'environment'));
+
+                if (!rearCamera) {
+                        // 후면 카메라가 없을 경우, 'environment'를 지원하는 첫 번째 비디오 장치 선택
+                    rearCamera = videoDevices[0];
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        deviceId: rearCamera.deviceId
+                    }
+                });
+
+                videoElement.srcObject = stream;
+
+                // 카메라 시작 시 캡처 영역을 보이도록 설정
+                container.classList.add('camera-started');
+            } catch (err) {
+                show("카메라를 열 수 없습니다." + err);
+            }
+        }
+
+        async function stopCamera() {
+            if (stream) {
+                let tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+                
+                // 카메라 정지 시 캡처 영역 숨기기
+                container.classList.remove('camera-started');
+            }
+        }
+
+        async function capturedImage(argument) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            // 비디오 크기와 동일하게 캔버스 크기 설정
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+
+            // 캔버스에 비디오 이미지 그리기
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            // 캡처된 이미지 데이터를 이미지 태그에 표시
+            capturedImageArea.src = canvas.toDataURL('image/png');
+        }
+
+        async function downloadImage(argument) {
+            if (capturedImageArea.src) {
+                const link = document.createElement('a');
+                link.href = capturedImageArea.src;
+                link.download = 'captured_image.png';
+                link.click();
+            } else {
+                show("이미지를 먼저 캡처해주세요!");
+            }
+        }
+
+        startCameraButton.addEventListener('click', startCamera);
+        stopCameraButton.addEventListener('click', stopCamera);
+        captureButton.addEventListener('click', capturedImage);
+        downloadButton.addEventListener('click', downloadImage);
+
+
+        // 페이지가 로드되면 자동으로 카메라 시작
+        window.onload = function() {
+            startCamera();
+        };
+
+
+        // 다운로드 버튼 클릭 시 캡처된 이미지 다운로드
+        downloadButton.addEventListener('click', () => {
+
+        });
+    </script>
+</body>
+</html>
