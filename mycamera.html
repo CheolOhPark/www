@@ -111,12 +111,16 @@
         }
 
         var Result = new Object();
-        Result.onResult = function(result, permission) {
+        Result.onPermissionResult = function(result, permission) {
           if (result == 0) {
             startCamera();
           } else {
             show("카메라 권한이 거부되었습니다.");
           }
+        }
+
+        Result.onDownladResult = function(result) {
+            show("다운로드 완료. 결과 = " + result);
         }
 
         function show(message) {
@@ -131,7 +135,7 @@
             try {
                 if (isOCB && isAndroid) {
                     if (OcbAndroidJS.checkPermission("android.permission.CAMERA") != 0) {
-                        OcbAndroidJS.requestPermission("Result.onResult", "android.permission.CAMERA");
+                        OcbAndroidJS.requestPermission("Result.onPermissionResult", "android.permission.CAMERA");
                         return;
                     }
                 }
@@ -200,10 +204,14 @@
 
         async function downloadImage(argument) {
             if (capturedImageArea.src) {
-                const link = document.createElement('a');
-                link.href = capturedImageArea.src;
-                link.download = 'captured_image.png';
-                link.click();
+                if (isOCB) {
+                    OcbApp.downloadImage(capturedImageArea.src, "Result.onDownladResult");
+                } else {
+                    const link = document.createElement('a');
+                    link.href = capturedImageArea.src;
+                    link.download = 'captured_image.png';
+                    link.click();
+                }
             } else {
                 show("이미지를 먼저 캡처해주세요!");
             }
