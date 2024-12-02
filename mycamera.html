@@ -83,7 +83,10 @@
         </div>
     </div>
 
-    <script>
+    <script type="text/javascript" src="https://unpkg.com/@zxing/browser@latest"></script>
+
+    <script type="text/javascript">
+
         const videoElement = document.getElementById('videoElement');
         const captureButton = document.getElementById('captureButton');
         const capturedImageArea = document.getElementById('capturedImage');
@@ -92,6 +95,7 @@
         const downloadButton = document.getElementById('downloadButton');
         const container = document.querySelector('.container');
 
+        const codeReader = new ZXingBrowser.BrowserQRCodeReader();
         let stream;
 
         const userAgent = window.navigator.userAgent;
@@ -175,9 +179,27 @@
 
                 // 카메라 시작 시 캡처 영역을 보이도록 설정
                 container.classList.add('camera-started');
+
+                scanBarcode();
             } catch (err) {
                 show("카메라를 열 수 없습니다." + err);
             }
+        }
+
+
+        async function scanBarcode() {
+            codeReader.decodeFromVideoDevice(null, 'videoElement', (result, error) => {
+                if (result) {
+                    console.log("스캔된 바코드: ", result.text);
+                    alert('스캔된 바코드: ' + result.text);
+                    // 바코드를 인식한 후 추가 처리할 수 있음 (예: 스캔 완료 후 스캔 영역 숨기기)
+                    scanArea.style.display = 'none';
+                }
+                if (error && !(err instanceof NotFoundException)) {
+                    show('error ' + error);
+                    console.error(error);
+                }
+            });
         }
 
         async function stopCamera() {
