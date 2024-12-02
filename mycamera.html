@@ -217,7 +217,7 @@
             }
         }
 
-        startCameraButton.addEventListener('click', startCamera);
+        startCameraButton.addEventListener('click', requestPermission);
         stopCameraButton.addEventListener('click', stopCamera);
         captureButton.addEventListener('click', capturedImage);
         downloadButton.addEventListener('click', downloadImage);
@@ -225,7 +225,7 @@
 
         // 페이지가 로드되면 자동으로 카메라 시작
         window.onload = function() {
-            startCamera();
+            requestPermission();
         };
 
 
