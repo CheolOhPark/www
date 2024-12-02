@@ -195,7 +195,7 @@
                     // 바코드를 인식한 후 추가 처리할 수 있음 (예: 스캔 완료 후 스캔 영역 숨기기)
                     scanArea.style.display = 'none';
                 }
-                if (error && !(err instanceof NotFoundException)) {
+                if (error && !(error instanceof NotFoundException)) {
                     show('error ' + error);
                     console.error(error);
                 }
