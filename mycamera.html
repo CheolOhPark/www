@@ -142,7 +142,7 @@
             } catch (err) {
             }
 
-            Result.onResult(0);
+            Result.onPermissionResult(0);
         }
 
         // 카메라 시작 함수
@@ -172,7 +172,6 @@
                 videoElement.muted = true;
                 videoElement.style.width = '100%';
                 videoElement.style.height = '100%';
-
 
                 // 카메라 시작 시 캡처 영역을 보이도록 설정
                 container.classList.add('camera-started');
