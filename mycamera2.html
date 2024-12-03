@@ -108,6 +108,8 @@
         const container = document.querySelector('.container');
 
         const codeReader = new ZXing.BrowserQRCodeReader();
+        let selectedDeviceId;
+        let started = false;
 
         const userAgent = window.navigator.userAgent;
         let isOCB = false;   // OCB APP 내 웹뷰 여부
@@ -167,14 +169,21 @@
                 return;
             }
 
+            if (started) {
+                return;
+            }
+
             while (sourceSelect.firstChild) {
                 sourceSelect.firstChild.remove()
             }
 
-            let selectedDeviceId;
             codeReader.getVideoInputDevices().then((videoInputDevices) => {
                 const sourceSelect = document.getElementById('sourceSelect')
-                selectedDeviceId = videoInputDevices[0].deviceId
+
+                if (selectedDeviceId === undefined) {
+                    selectedDeviceId = videoInputDevices[0].deviceId
+                }
+
                 if (videoInputDevices.length >= 1) {
                     videoInputDevices.forEach((element) => {
                         const sourceOption = document.createElement('option')
@@ -185,6 +194,7 @@
 
                     sourceSelect.onchange = () => {
                         selectedDeviceId = sourceSelect.value;
+                        decodeContinuously(codeReader, selectedDeviceId);
                     };
 
                     const sourceSelectPanel = document.getElementById('sourceSelectPanel')
@@ -193,15 +203,16 @@
 
                 decodeContinuously(codeReader, selectedDeviceId);
                 console.log(`Started decode from camera with id ${selectedDeviceId}`)
+                started = true;
             });
         }
 
         function resetScan() {
             codeReader.reset();
             document.getElementById('result').textContent = '';
+            started = false;
             console.log('Reset.');
         }
-
 
         function decodeContinuously(codeReader, selectedDeviceId) {
             codeReader.decodeFromInputVideoDeviceContinuously(selectedDeviceId, videoElement, (result, err) => {
@@ -273,6 +284,7 @@
         }
 
         window.addEventListener('load', startScan);
+
         startButton.addEventListener('click', startScan);
         resetButton.addEventListener('click', resetScan);
         captureButton.addEventListener('click', captureImage);
