@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>바코드 스캐너</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+            text-align: center;
+        }
+
+        .camera-preview, .captured-image {
+            position: relative;
+            width: 100%;
+            height: 360px;
+            background-color: #000;
+            margin-bottom: 20px;
+        }
+
+        video, img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* 미리 캡처 영역을 항상 보이게 */
+        .captured-image {
+            display: none;  /* 카메라 시작 전에는 캡처 영역 숨기기 */
+        }
+
+        /* 카메라가 시작되면 캡처 이미지 영역 보이도록 */
+        .camera-started .captured-image {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <main class="wrapper" style="padding-top:2em">
+        <div class="container">
+            <!-- 카메라 프리뷰 -->
+            <div class="camera-preview">
+                <video id="videoElement" autoplay playsinline></video>
+            </div>
+
+            <div id="sourceSelectPanel" style="display: table">
+                <label for="sourceSelect">비디오 소스 변경:</label>
+                <select id="sourceSelect" style="max-width:400px">
+                </select>
+            </div>
+
+
+            <!-- 버튼 4개 -->
+            <div class="controls">
+                <button id="startButton">시작</button>
+                <button id="resetButton">초기화</button>
+                <button id="captureButton">캡처</button>
+                <button id="downloadButton">다운로드</button>
+            </div>
+
+            <label>Result:</label>
+            <pre><code id="result"></code></pre>
+
+            <!-- 캡쳐된 화면 -->
+            <div class="captured-image">
+                <img id="capturedArea" src="" alt="캡처된 이미지">
+            </div>
+        </div>
+    </main>
+
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
+    <script type="text/javascript">
+        const videoElement = document.getElementById('videoElement');
+        const capturedArea = document.getElementById('capturedArea');
+
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const captureButton = document.getElementById('captureButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const container = document.querySelector('.container');
+
+        const codeReader = new ZXing.BrowserQRCodeReader();
+
+        const userAgent = window.navigator.userAgent;
+        let isOCB = false;   // OCB APP 내 웹뷰 여부
+        let isAndroid = false; // Android / iOS 여부
+        let OcbApp = null;
+
+        if (userAgent.indexOf("OCBAPP") > 0) {
+            isOCB = true;
+
+          if (userAgent.indexOf("SKP_OCB_AND") > 0) {
+              isAndroid = true;
+              OcbApp = OcbAndroidJS
+          } else {
+              OcbApp = OcbiOSJS
+          }
+        }
+
+        var Result = new Object();
+        Result.onPermissionResult = function(result, permission) {
+          if (result == 0) {
+            startScan();
+          } else {
+            show("카메라 권한이 거부되었습니다.");
+          }
+        }
+
+        Result.onDownladResult = function(result) {
+            show("이미지 다운로드 완료. 결과 = " + result);
+        }
+
+        function show(message) {
+            if (isOCB) {
+                OcbApp.showToast(message);
+            } else {
+                alert(message);
+            }
+        }
+
+        function canOpenCamera() {
+            if (isOCB && isAndroid) {
+                return OcbAndroidJS.checkPermission("android.permission.CAMERA") == 0;
+            }
+
+            return true;
+        }
+
+        function requestPermission() {
+            if (!canOpenCamera()) {
+                OcbAndroidJS.requestPermission("Result.onPermissionResult", 
+                    "android.permission.CAMERA");
+            }
+        }
+
+        function startScan() {
+            if (!canOpenCamera()) {
+                requestPermission();
+                return;
+            }
+
+            while (sourceSelect.firstChild) {
+                sourceSelect.firstChild.remove()
+            }
+
+            let selectedDeviceId;
+            codeReader.getVideoInputDevices().then((videoInputDevices) => {
+                const sourceSelect = document.getElementById('sourceSelect')
+                selectedDeviceId = videoInputDevices[0].deviceId
+                if (videoInputDevices.length >= 1) {
+                    videoInputDevices.forEach((element) => {
+                        const sourceOption = document.createElement('option')
+                        sourceOption.text = element.label
+                        sourceOption.value = element.deviceId
+                        sourceSelect.appendChild(sourceOption)
+                    })
+
+                    sourceSelect.onchange = () => {
+                        selectedDeviceId = sourceSelect.value;
+                    };
+
+                    const sourceSelectPanel = document.getElementById('sourceSelectPanel')
+                    sourceSelectPanel.style.display = 'block'
+                }
+
+                decodeContinuously(codeReader, selectedDeviceId);
+                console.log(`Started decode from camera with id ${selectedDeviceId}`)
+            });
+        }
+
+        function resetScan() {
+            codeReader.reset();
+            document.getElementById('result').textContent = '';
+            console.log('Reset.');
+        }
+
+
+        function decodeContinuously(codeReader, selectedDeviceId) {
+            codeReader.decodeFromInputVideoDeviceContinuously(selectedDeviceId, videoElement, (result, err) => {
+                if (result) {
+                    // properly decoded qr code
+                    console.log('Found QR code!', result)
+                    document.getElementById('result').textContent = result.text
+
+                    show(result.text);
+                }
+
+                if (err) {
+                    // As long as this error belongs into one of the following categories
+                    // the code reader is going to continue as excepted. Any other error
+                    // will stop the decoding loop.
+                    //
+                    // Excepted Exceptions:
+                    //
+                    //  - NotFoundException
+                    //  - ChecksumException
+                    //  - FormatException
+
+                    if (err instanceof ZXing.NotFoundException) {
+                        console.log('No QR code found.')
+                    }
+
+                    if (err instanceof ZXing.ChecksumException) {
+                        console.log('A code was found, but it\'s read value was not valid.')
+                    }
+
+                    if (err instanceof ZXing.FormatException) {
+                        console.log('A code was found, but it was in a invalid format.')
+                    }
+                }
+            })
+        }
+
+
+        function captureImage(argument) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            // 비디오 크기와 동일하게 캔버스 크기 설정
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+
+            // 캔버스에 비디오 이미지 그리기
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            // 캡처된 이미지 데이터를 이미지 태그에 표시
+            capturedArea.src = canvas.toDataURL('image/png');
+
+            show("캡쳐 되었습니다.");
+        }
+
+        function downloadImage(argument) {
+            if (capturedArea.src) {
+                if (isOCB) {
+                    OcbApp.downloadImage(capturedImageArea.src, "Result.onDownladResult");
+                } else {
+                    const link = document.createElement('a');
+                    link.href = capturedArea.src;
+                    link.download = 'captured_image.png';
+                    link.click();
+                }
+            } else {
+                show("이미지를 먼저 캡처해주세요!");
+            }
+        }
+
+        window.addEventListener('load', startScan);
+        startButton.addEventListener('click', startScan);
+        resetButton.addEventListener('click', resetScan);
+        captureButton.addEventListener('click', captureImage);
+        downloadButton.addEventListener('click', downloadImage);
+
+    </script>
+</body>
+
+</html>
